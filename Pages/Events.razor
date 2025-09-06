@@ -1,0 +1,598 @@
+@page "/events"
+@page "/events/{eventId:int}"
+@using EventEase.Models
+@using EventEase.Services
+@using EventEase.Components
+@inject EventService EventService
+@inject SessionService SessionService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<PageTitle>EventEase - Events</PageTitle>
+
+<div class="events-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Events
+                    </h1>
+                    <p class="text-muted mb-0">Discover and manage events</p>
+                </div>
+                <div>
+                    <button @onclick="CreateNewEvent" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Create Event
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (EventId.HasValue)
+        {
+            <!-- Single Event View -->
+            @if (SelectedEvent != null)
+            {
+                <div class="event-details mb-4">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a @onclick="() => NavigateToEventsList()" @onclick:preventDefault href="#">Events</a>
+                            </li>
+                            <li class="breadcrumb-item active">@SelectedEvent.Title</li>
+                        </ol>
+                    </nav>
+
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <EventCard Event="@SelectedEvent" 
+                                     OnRegisterClicked="@HandleRegisterClick" 
+                                     OnEventUpdated="@HandleEventUpdated"
+                                     ShowEditButton="true"
+                                     ShowDeleteButton="true"
+                                     OnDeleteClicked="@HandleDeleteEvent"
+                                     IsSelected="true" />
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Event Information
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="event-info-item mb-3">
+                                        <strong>Capacity:</strong>
+                                        <div class="progress mt-1">
+                                            <div class="progress-bar" style="width: @(SelectedEvent.MaxCapacity > 0 ? (SelectedEvent.RegisteredCount * 100.0 / SelectedEvent.MaxCapacity) : 0)%"></div>
+                                        </div>
+                                        <small class="text-muted">@SelectedEvent.RegisteredCount / @SelectedEvent.MaxCapacity registered</small>
+                                    </div>
+                                    
+                                    <div class="event-info-item mb-3">
+                                        <strong>Status:</strong>
+                                        <span class="badge @(SelectedEvent.IsUpcoming ? "bg-success" : "bg-secondary") ms-2">
+                                            @SelectedEvent.StatusText
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="event-info-item mb-3">
+                                        <strong>Created:</strong>
+                                        <div class="text-muted">@SelectedEvent.CreatedDate.ToString("dd MMM yyyy")</div>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(SelectedEvent.ImageUrl))
+                                    {
+                                        <div class="event-info-item">
+                                            <strong>Event Image:</strong>
+                                            <img src="@SelectedEvent.ImageUrl" class="img-fluid rounded mt-2" alt="@SelectedEvent.Title" />
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (IsLoading)
+            {
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading event details...</p>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Event not found or may have been deleted.
+                    <a @onclick="() => NavigateToEventsList()" @onclick:preventDefault href="#" class="alert-link ms-2">
+                        Back to Events
+                    </a>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Events List View -->
+            <div class="events-list">
+                <!-- Search and Filter Controls -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input @bind="SearchTerm" @bind:event="oninput" @onkeypress="HandleSearchKeyPress"
+                                           class="form-control" placeholder="Search events..." />
+                                    <button @onclick="HandleSearch" class="btn btn-outline-primary" type="button">
+                                        Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2 justify-content-md-end">
+                                    <select @bind="FilterOption" @onchange="ApplyFilter" class="form-select" style="width: auto;">
+                                        <option value="all">All Events</option>
+                                        <option value="upcoming">Upcoming Only</option>
+                                        <option value="free">Free Events</option>
+                                        <option value="paid">Paid Events</option>
+                                    </select>
+                                    <select @bind="SortOption" @onchange="ApplySorting" class="form-select" style="width: auto;">
+                                        <option value="date">Sort by Date</option>
+                                        <option value="title">Sort by Title</option>
+                                        <option value="price">Sort by Price</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (SearchHistory.Any())
+                        {
+                            <div class="search-suggestions mt-2">
+                                <small class="text-muted">Recent searches:</small>
+                                @foreach (var term in SearchHistory.Take(3))
+                                {
+                                    <button @onclick="() => SearchWithTerm(term)" class="btn btn-sm btn-outline-secondary ms-1">
+                                        @term
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Events Grid -->
+                @if (IsLoading)
+                {
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading events...</p>
+                    </div>
+                }
+                else if (FilteredEvents.Any())
+                {
+                    <div class="events-grid">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="text-muted">Showing @FilteredEvents.Count events</span>
+                            </div>
+                            <div class="view-controls">
+                                <div class="btn-group" role="group">
+                                    <button @onclick="() => SetViewMode(ViewMode.Grid)" 
+                                            class="btn @(CurrentViewMode == ViewMode.Grid ? "btn-primary" : "btn-outline-primary") btn-sm">
+                                        <i class="fas fa-th"></i>
+                                    </button>
+                                    <button @onclick="() => SetViewMode(ViewMode.List)" 
+                                            class="btn @(CurrentViewMode == ViewMode.List ? "btn-primary" : "btn-outline-primary") btn-sm">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (CurrentViewMode == ViewMode.Grid)
+                        {
+                            <div class="row g-4">
+                                @foreach (var eventItem in FilteredEvents)
+                                {
+                                    <div class="col-lg-6 col-xl-4" @key="eventItem.Id">
+                                        <EventCard Event="@eventItem" 
+                                                 OnCardClicked="@HandleEventClick"
+                                                 OnRegisterClicked="@HandleRegisterClick" 
+                                                 OnViewDetails="@HandleViewDetails"
+                                                 OnEventUpdated="@HandleEventUpdated"
+                                                 OnDeleteClicked="@HandleDeleteEvent"
+                                                 ShowEditButton="true"
+                                                 ShowDeleteButton="true" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="events-list-view">
+                                @foreach (var eventItem in FilteredEvents)
+                                {
+                                    <div class="event-list-item mb-3" @key="eventItem.Id">
+                                        <EventCard Event="@eventItem" 
+                                                 OnCardClicked="@HandleEventClick"
+                                                 OnRegisterClicked="@HandleRegisterClick" 
+                                                 OnViewDetails="@HandleViewDetails"
+                                                 OnEventUpdated="@HandleEventUpdated"
+                                                 OnDeleteClicked="@HandleDeleteEvent"
+                                                 ShowEditButton="true"
+                                                 ShowDeleteButton="true" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-events text-center p-5">
+                        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Events Found</h4>
+                        @if (!string.IsNullOrEmpty(SearchTerm))
+                        {
+                            <p class="text-muted">No events match your search criteria.</p>
+                            <button @onclick="ClearSearch" class="btn btn-outline-primary">
+                                <i class="fas fa-times me-1"></i>
+                                Clear Search
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="text-muted">There are no events available at the moment.</p>
+                            <button @onclick="CreateNewEvent" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Create First Event
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? EventId { get; set; }
+    [SupplyParameterFromQuery] public string? Search { get; set; }
+
+    private List<Event> AllEvents = new();
+    private List<Event> FilteredEvents = new();
+    private Event? SelectedEvent;
+    private List<string> SearchHistory = new();
+    private string SearchTerm = string.Empty;
+    private string FilterOption = "all";
+    private string SortOption = "date";
+    private bool IsLoading = false;
+    private ViewMode CurrentViewMode = ViewMode.Grid;
+
+    private enum ViewMode { Grid, List }
+
+    protected override async Task OnInitializedAsync()
+    {
+        SessionService.OnStateChanged += StateHasChanged;
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Handle search from query parameter
+        if (!string.IsNullOrEmpty(Search))
+        {
+            SearchTerm = Search;
+        }
+
+        if (EventId.HasValue)
+        {
+            await LoadSingleEvent(EventId.Value);
+        }
+        else
+        {
+            await ApplyFiltersAndSort();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            AllEvents = await EventService.GetAllEventsAsync();
+            SearchHistory = SessionService.GetSearchHistory();
+            await ApplyFiltersAndSort();
+            SessionService.AddRecentActivity("Viewed events page");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadSingleEvent(int id)
+    {
+        IsLoading = true;
+        try
+        {
+            SelectedEvent = await EventService.GetEventByIdAsync(id);
+            if (SelectedEvent != null)
+            {
+                SessionService.AddRecentActivity($"Viewed event details: {SelectedEvent.Title}");
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ApplyFiltersAndSort()
+    {
+        var events = AllEvents.AsQueryable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            events = events.Where(e => 
+                e.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Description.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Location.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply additional filters
+        events = FilterOption switch
+        {
+            "upcoming" => events.Where(e => e.IsUpcoming && e.IsActive),
+            "free" => events.Where(e => e.Price == 0),
+            "paid" => events.Where(e => e.Price > 0),
+            _ => events.Where(e => e.IsActive)
+        };
+
+        // Apply sorting
+        events = SortOption switch
+        {
+            "title" => events.OrderBy(e => e.Title),
+            "price" => events.OrderBy(e => e.Price),
+            _ => events.OrderBy(e => e.EventDate)
+        };
+
+        FilteredEvents = events.ToList();
+    }
+
+    private async Task HandleSearch()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm.Trim()))
+        {
+            SessionService.AddSearchTerm(SearchTerm);
+            SearchHistory = SessionService.GetSearchHistory();
+            SessionService.AddRecentActivity($"Searched events: {SearchTerm}");
+        }
+        await ApplyFiltersAndSort();
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleSearch();
+        }
+    }
+
+    private async Task SearchWithTerm(string term)
+    {
+        SearchTerm = term;
+        await HandleSearch();
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        await ApplyFiltersAndSort();
+    }
+
+    private async Task ApplyFilter(ChangeEventArgs e)
+    {
+        FilterOption = e.Value?.ToString() ?? "all";
+        await ApplyFiltersAndSort();
+        SessionService.AddRecentActivity($"Filtered events: {FilterOption}");
+    }
+
+    private async Task ApplySorting(ChangeEventArgs e)
+    {
+        SortOption = e.Value?.ToString() ?? "date";
+        await ApplyFiltersAndSort();
+        SessionService.AddRecentActivity($"Sorted events by: {SortOption}");
+    }
+
+    private void SetViewMode(ViewMode mode)
+    {
+        CurrentViewMode = mode;
+        SessionService.SetValue("EventsViewMode", mode.ToString());
+        SessionService.AddRecentActivity($"Changed view mode to: {mode}");
+    }
+
+    private async Task HandleEventClick(Event eventItem)
+    {
+        NavigationManager.NavigateTo($"/events/{eventItem.Id}");
+    }
+
+    private async Task HandleRegisterClick(Event eventItem)
+    {
+        SessionService.SetValue("SelectedEventId", eventItem.Id);
+        SessionService.AddRecentActivity($"Started registration for: {eventItem.Title}");
+        NavigationManager.NavigateTo($"/registration?eventId={eventItem.Id}");
+    }
+
+    private async Task HandleViewDetails(Event eventItem)
+    {
+        NavigationManager.NavigateTo($"/events/{eventItem.Id}");
+    }
+
+    private async Task HandleEventUpdated(Event updatedEvent)
+    {
+        try
+        {
+            await EventService.UpdateEventAsync(updatedEvent);
+            
+            // Update the event in our lists
+            var existingEvent = AllEvents.FirstOrDefault(e => e.Id == updatedEvent.Id);
+            if (existingEvent != null)
+            {
+                var index = AllEvents.IndexOf(existingEvent);
+                AllEvents[index] = updatedEvent;
+            }
+
+            if (SelectedEvent?.Id == updatedEvent.Id)
+            {
+                SelectedEvent = updatedEvent;
+            }
+
+            await ApplyFiltersAndSort();
+            SessionService.AddRecentActivity($"Updated event: {updatedEvent.Title}");
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a toast notification
+            Console.WriteLine($"Error updating event: {ex.Message}");
+        }
+    }
+
+    private async Task HandleDeleteEvent(Event eventItem)
+    {
+        if (await ConfirmDelete(eventItem))
+        {
+            try
+            {
+                await EventService.DeleteEventAsync(eventItem.Id);
+                AllEvents.Remove(eventItem);
+                await ApplyFiltersAndSort();
+                SessionService.AddRecentActivity($"Deleted event: {eventItem.Title}");
+
+                // If we're viewing the deleted event, navigate back to list
+                if (EventId == eventItem.Id)
+                {
+                    NavigateToEventsList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting event: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task<bool> ConfirmDelete(Event eventItem)
+    {
+        // In a real application, you'd show a proper confirmation dialog
+        // For now, we'll use a simple confirmation
+        return true; // Assume confirmed for demo purposes
+    }
+
+    private void CreateNewEvent()
+    {
+        // Navigate to event creation page (would be implemented)
+        SessionService.AddRecentActivity("Started creating new event");
+        // NavigationManager.NavigateTo("/events/create");
+    }
+
+    private void NavigateToEventsList()
+    {
+        NavigationManager.NavigateTo("/events");
+    }
+
+    public void Dispose()
+    {
+        SessionService.OnStateChanged -= StateHasChanged;
+    }
+}
+
+<style>
+    .events-page {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .page-header {
+        border-bottom: 2px solid var(--bs-primary);
+        padding-bottom: 1rem;
+    }
+
+    .search-suggestions button {
+        margin: 2px;
+    }
+
+    .view-controls .btn-group {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .events-grid {
+        min-height: 400px;
+    }
+
+    .event-list-item {
+        animation: slideInLeft 0.3s ease-out;
+    }
+
+    .no-events {
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .event-info-item {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+    }
+
+    .event-info-item:last-child {
+        border-bottom: none;
+    }
+
+    .breadcrumb-item a {
+        color: var(--bs-primary);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 768px) {
+        .view-controls {
+            margin-top: 1rem;
+        }
+        
+        .page-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+</style>

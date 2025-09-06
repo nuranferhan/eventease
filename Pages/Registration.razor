@@ -1,0 +1,516 @@
+@page "/registration"
+@using EventEase.Models
+@using EventEase.Services
+@using EventEase.Components
+@inject EventService EventService
+@inject RegistrationService RegistrationService
+@inject SessionService SessionService
+@inject NavigationManager NavigationManager
+
+<PageTitle>EventEase - Registration</PageTitle>
+
+<div class="registration-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/events" class="text-decoration-none">Events</a>
+                    </li>
+                    <li class="breadcrumb-item active">Registration</li>
+                </ol>
+            </nav>
+
+            <h1>
+                <i class="fas fa-user-plus me-2"></i>
+                Event Registration
+            </h1>
+            <p class="text-muted mb-0">Register for exciting events and activities</p>
+        </div>
+
+        @if (SelectedEventId.HasValue)
+        {
+            <!-- Registration for Specific Event -->
+            @if (SelectedEvent != null)
+            {
+                <div class="row">
+                    <div class="col-lg-8">
+                        <RegistrationForm Event="@SelectedEvent" 
+                                        OnRegistrationComplete="@HandleRegistrationComplete"
+                                        OnCancel="@HandleCancel" />
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="sticky-top">
+                            <div class="card mb-4">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Event Details
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title">@SelectedEvent.Title</h6>
+                                    <p class="card-text small">@SelectedEvent.Description</p>
+                                    
+                                    <div class="event-quick-info">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-calendar text-primary me-2"></i>
+                                            <span class="small">@SelectedEvent.EventDate.ToString("dd MMM yyyy, HH:mm")</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                            <span class="small">@SelectedEvent.Location</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-users text-info me-2"></i>
+                                            <span class="small">@SelectedEvent.AvailableSpots spots available</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-tag text-success me-2"></i>
+                                            <span class="small fw-bold">
+                                                @(SelectedEvent.Price > 0 ? SelectedEvent.Price.ToString("C") : "FREE")
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(SelectedEvent.ImageUrl))
+                                    {
+                                        <img src="@SelectedEvent.ImageUrl" class="img-fluid rounded mt-3" alt="@SelectedEvent.Title" />
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        Registration Security
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="security-features">
+                                        <div class="feature-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Secure data encryption</small>
+                                        </div>
+                                        <div class="feature-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Instant confirmation</small>
+                                        </div>
+                                        <div class="feature-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Email notifications</small>
+                                        </div>
+                                        <div class="feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Easy cancellation</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (IsLoading)
+            {
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading event details...</p>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Event not found or is no longer available for registration.
+                    <a href="/events" class="alert-link ms-2">Browse other events</a>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Event Selection for Registration -->
+            <div class="event-selection">
+                <div class="text-center mb-4">
+                    <h3>Choose an Event to Register</h3>
+                    <p class="text-muted">Select from our upcoming events below</p>
+                </div>
+
+                <!-- Search Section -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input @bind="SearchTerm" @bind:event="oninput" @onkeypress="HandleSearchKeyPress"
+                                           class="form-control" placeholder="Search for events..." />
+                                    <button @onclick="HandleSearch" class="btn btn-outline-primary" type="button">
+                                        Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <select @bind="FilterOption" @onchange="ApplyFilter" class="form-select">
+                                    <option value="upcoming">Upcoming Events</option>
+                                    <option value="free">Free Events</option>
+                                    <option value="paid">Paid Events</option>
+                                    <option value="all">All Events</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (IsLoading)
+                {
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading available events...</p>
+                    </div>
+                }
+                else if (AvailableEvents.Any())
+                {
+                    <div class="events-grid">
+                        <div class="mb-3">
+                            <span class="text-muted">@AvailableEvents.Count events available for registration</span>
+                        </div>
+                        
+                        <div class="row g-4">
+                            @foreach (var eventItem in AvailableEvents)
+                            {
+                                <div class="col-lg-6" @key="eventItem.Id">
+                                    <div class="registration-event-card">
+                                        <EventCard Event="@eventItem" 
+                                                 OnRegisterClicked="@HandleEventSelection"
+                                                 OnViewDetails="@HandleViewDetails"
+                                                 ShowEditButton="false"
+                                                 ShowDeleteButton="false" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-events text-center p-5">
+                        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Events Available</h4>
+                        @if (!string.IsNullOrEmpty(SearchTerm))
+                        {
+                            <p class="text-muted">No events match your search criteria.</p>
+                            <button @onclick="ClearSearch" class="btn btn-outline-primary">
+                                <i class="fas fa-times me-1"></i>
+                                Clear Search
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="text-muted">There are no events available for registration at the moment.</p>
+                            <a href="/events" class="btn btn-primary">
+                                <i class="fas fa-eye me-1"></i>
+                                Browse All Events
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Registration Status/History -->
+        @if (RecentRegistrations.Any())
+        {
+            <div class="recent-registrations mt-5">
+                <h3>
+                    <i class="fas fa-history me-2"></i>
+                    Your Recent Registrations
+                </h3>
+                <div class="row g-3">
+                    @foreach (var registration in RecentRegistrations.Take(3))
+                    {
+                        <div class="col-md-4" @key="registration.Id">
+                            <div class="card registration-history-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">Registration #@registration.Id</h6>
+                                        <span class="badge @(registration.IsConfirmed ? "bg-success" : "bg-warning")">
+                                            @registration.StatusText
+                                        </span>
+                                    </div>
+                                    <p class="card-text small text-muted">
+                                        Registered on @registration.RegistrationDate.ToString("dd MMM yyyy")
+                                    </p>
+                                    <div class="text-center">
+                                        <code class="confirmation-code">@registration.ConfirmationCode</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public int? EventId { get; set; }
+
+    private int? SelectedEventId => EventId ?? SessionService.GetInt("SelectedEventId");
+    private Event? SelectedEvent;
+    private List<Event> AvailableEvents = new();
+    private List<Registration> RecentRegistrations = new();
+    private string SearchTerm = string.Empty;
+    private string FilterOption = "upcoming";
+    private bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedEventId.HasValue)
+        {
+            await LoadSelectedEvent(SelectedEventId.Value);
+        }
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            await LoadAvailableEvents();
+            await LoadRecentRegistrations();
+            SessionService.AddRecentActivity("Visited registration page");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadSelectedEvent(int eventId)
+    {
+        IsLoading = true;
+        try
+        {
+            SelectedEvent = await EventService.GetEventByIdAsync(eventId);
+            if (SelectedEvent != null)
+            {
+                SessionService.AddRecentActivity($"Started registration for: {SelectedEvent.Title}");
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadAvailableEvents()
+    {
+        try
+        {
+            var allEvents = await EventService.GetAllEventsAsync();
+            await ApplyFilters(allEvents);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading events: {ex.Message}");
+        }
+    }
+
+    private async Task LoadRecentRegistrations()
+    {
+        try
+        {
+            // In a real app, this would be filtered by user
+            RecentRegistrations = await RegistrationService.GetAllRegistrationsAsync();
+            RecentRegistrations = RecentRegistrations.Take(5).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading registrations: {ex.Message}");
+        }
+    }
+
+    private async Task ApplyFilters(List<Event> events)
+    {
+        var filteredEvents = events.AsQueryable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filteredEvents = filteredEvents.Where(e => 
+                e.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Description.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Location.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply filter options
+        filteredEvents = FilterOption switch
+        {
+            "upcoming" => filteredEvents.Where(e => e.IsUpcoming && e.IsActive && !e.IsFull),
+            "free" => filteredEvents.Where(e => e.Price == 0 && e.IsActive && !e.IsFull),
+            "paid" => filteredEvents.Where(e => e.Price > 0 && e.IsActive && !e.IsFull),
+            _ => filteredEvents.Where(e => e.IsActive && !e.IsFull)
+        };
+
+        AvailableEvents = filteredEvents.OrderBy(e => e.EventDate).ToList();
+    }
+
+    private async Task HandleSearch()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm.Trim()))
+        {
+            SessionService.AddSearchTerm(SearchTerm);
+            SessionService.AddRecentActivity($"Searched registration events: {SearchTerm}");
+        }
+        await LoadAvailableEvents();
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleSearch();
+        }
+    }
+
+    private async Task ApplyFilter(ChangeEventArgs e)
+    {
+        FilterOption = e.Value?.ToString() ?? "upcoming";
+        await LoadAvailableEvents();
+        SessionService.AddRecentActivity($"Filtered registration events: {FilterOption}");
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        await LoadAvailableEvents();
+    }
+
+    private async Task HandleEventSelection(Event eventItem)
+    {
+        SessionService.SetValue("SelectedEventId", eventItem.Id);
+        NavigationManager.NavigateTo($"/registration?eventId={eventItem.Id}");
+    }
+
+    private async Task HandleViewDetails(Event eventItem)
+    {
+        NavigationManager.NavigateTo($"/events/{eventItem.Id}");
+    }
+
+    private async Task HandleRegistrationComplete()
+    {
+        await LoadRecentRegistrations();
+        StateHasChanged();
+        
+        // Clear selected event
+        SessionService.RemoveValue("SelectedEventId");
+        
+        // Navigate back to event selection after a delay
+        await Task.Delay(3000);
+        NavigationManager.NavigateTo("/registration");
+    }
+
+    private void HandleCancel()
+    {
+        SessionService.RemoveValue("SelectedEventId");
+        NavigationManager.NavigateTo("/registration");
+    }
+}
+
+<style>
+    .registration-page {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    .page-header {
+        border-bottom: 2px solid var(--bs-success);
+        padding-bottom: 1rem;
+    }
+
+    .sticky-top {
+        top: 20px;
+    }
+
+    .event-quick-info {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 5px;
+        border-left: 4px solid var(--bs-info);
+    }
+
+    .security-features .feature-item {
+        transition: all 0.2s ease;
+    }
+
+    .security-features .feature-item:hover {
+        padding-left: 10px;
+    }
+
+    .registration-event-card {
+        transition: all 0.3s ease;
+    }
+
+    .registration-event-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .registration-history-card {
+        border-left: 4px solid var(--bs-success);
+        transition: all 0.2s ease;
+    }
+
+    .registration-history-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .confirmation-code {
+        background-color: var(--bs-success);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .no-events {
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .sticky-top {
+            position: static !important;
+            margin-top: 2rem;
+        }
+    }
+</style>

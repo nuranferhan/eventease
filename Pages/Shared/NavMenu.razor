@@ -1,0 +1,303 @@
+@using EventEase.Services
+@inject NavigationManager NavigationManager
+@inject SessionService SessionService
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <i class="fas fa-calendar-star me-2"></i>
+            EventEase
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="CollapseNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="events">
+                <span class="oi oi-calendar" aria-hidden="true"></span> Events
+            </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="registration">
+                <span class="oi oi-person" aria-hidden="true"></span> Registration
+            </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="attendance">
+                <span class="oi oi-clipboard" aria-hidden="true"></span> Attendance
+            </NavLink>
+        </div>
+
+        <hr class="nav-divider" />
+        
+        <!-- Quick Stats Section -->
+        <div class="nav-section">
+            <div class="nav-section-title">Quick Stats</div>
+            <div class="nav-stats">
+                <div class="stat-item">
+                    <i class="fas fa-calendar-alt text-info"></i>
+                    <span>@TotalEvents Events</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-users text-success"></i>
+                    <span>@TotalRegistrations Registrations</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Section -->
+        @if (RecentActivities.Any())
+        {
+            <div class="nav-section">
+                <div class="nav-section-title">Recent Activity</div>
+                <div class="nav-activity">
+                    @foreach (var activity in RecentActivities.Take(3))
+                    {
+                        <div class="activity-item">
+                            <i class="fas fa-circle activity-dot"></i>
+                            <span class="activity-text">@activity</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Quick Actions -->
+        <div class="nav-section mt-auto">
+            <div class="nav-section-title">Quick Actions</div>
+            <div class="quick-actions">
+                <button @onclick="NavigateToEvents" class="btn btn-sm btn-outline-light w-100 mb-2">
+                    <i class="fas fa-search me-1"></i>
+                    Find Events
+                </button>
+                <button @onclick="NavigateToRegister" class="btn btn-sm btn-outline-light w-100">
+                    <i class="fas fa-plus me-1"></i>
+                    Quick Register
+                </button>
+            </div>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private List<string> RecentActivities = new();
+    private int TotalEvents = 0;
+    private int TotalRegistrations = 0;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override void OnInitialized()
+    {
+        SessionService.OnStateChanged += OnStateChanged;
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        RecentActivities = SessionService.GetRecentActivities();
+        
+        // In a real application, these would be loaded from services
+        TotalEvents = 4; // Placeholder
+        TotalRegistrations = 12; // Placeholder
+    }
+
+    private void OnStateChanged()
+    {
+        LoadData();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void CollapseNavMenu()
+    {
+        collapseNavMenu = true;
+    }
+
+    private void NavigateToEvents()
+    {
+        SessionService.AddRecentActivity("Quick navigation to events");
+        NavigationManager.NavigateTo("/events");
+        CollapseNavMenu();
+    }
+
+    private void NavigateToRegister()
+    {
+        SessionService.AddRecentActivity("Quick navigation to registration");
+        NavigationManager.NavigateTo("/registration");
+        CollapseNavMenu();
+    }
+
+    public void Dispose()
+    {
+        SessionService.OnStateChanged -= OnStateChanged;
+    }
+}
+
+<style>
+    .top-row {
+        height: 3.5rem;
+        background-color: rgba(0,0,0,.4);
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: white !important;
+    }
+
+    .oi {
+        width: 2rem;
+        font-size: 1.1rem;
+        vertical-align: text-top;
+        top: -2px;
+    }
+
+    .nav-item {
+        font-size: 0.9rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .nav-item:first-of-type {
+        padding-top: 1rem;
+    }
+
+    .nav-item:last-of-type {
+        padding-bottom: 1rem;
+    }
+
+    .nav-link {
+        border-radius: 4px;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        line-height: 3rem;
+        color: #d7d7d7 !important;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        background-color: rgba(255,255,255,.1);
+        color: white !important;
+    }
+
+    .nav-link.active {
+        background-color: rgba(255,255,255,.25);
+        color: white !important;
+    }
+
+    .nav-divider {
+        border: 0;
+        height: 1px;
+        background-color: rgba(255,255,255,0.2);
+        margin: 1rem 0;
+    }
+
+    .nav-section {
+        padding: 0 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .nav-section-title {
+        color: #b8b8b8;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    .nav-stats .stat-item {
+        display: flex;
+        align-items: center;
+        color: #d7d7d7;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+        padding-left: 0.5rem;
+    }
+
+    .nav-stats .stat-item i {
+        width: 1.2rem;
+        margin-right: 0.5rem;
+    }
+
+    .nav-activity {
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        position: relative;
+        padding-left: 1rem;
+        margin-bottom: 0.5rem;
+        color: #d7d7d7;
+    }
+
+    .activity-dot {
+        position: absolute;
+        left: 0;
+        top: 0.2rem;
+        font-size: 0.4rem;
+        color: #28a745;
+    }
+
+    .activity-text {
+        font-size: 0.75rem;
+        line-height: 1.2;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .quick-actions {
+        padding: 0 0.5rem;
+    }
+
+    .quick-actions .btn {
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
+        border-color: rgba(255,255,255,0.3);
+        color: #d7d7d7;
+        transition: all 0.2s ease;
+    }
+
+    .quick-actions .btn:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 640.98px) {
+        .top-row {
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            font-size: 1rem;
+        }
+
+        .nav-link {
+            height: 3.5rem;
+            line-height: 3.5rem;
+        }
+    }
+</style>

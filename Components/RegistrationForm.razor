@@ -1,0 +1,299 @@
+@using EventEase.Models
+@using EventEase.Services
+@using System.ComponentModel.DataAnnotations
+@inject RegistrationService RegistrationService
+@inject SessionService SessionService
+
+<div class="registration-form">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-user-plus me-2"></i>
+                Register for @Event?.Title
+            </h4>
+        </div>
+        <div class="card-body">
+            @if (IsLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing registration...</p>
+                </div>
+            }
+            else if (IsSuccess)
+            {
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Registration Successful!</strong>
+                    <p class="mb-0 mt-2">
+                        Your confirmation code is: <strong>@Registration.ConfirmationCode</strong>
+                        <br>
+                        Please save this code for your records.
+                    </p>
+                </div>
+                <div class="text-center">
+                    <button @onclick="ResetForm" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Register Another Person
+                    </button>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="@Registration" OnValidSubmit="@HandleSubmit">
+                    <DataAnnotationsValidator />
+                    
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @ErrorMessage
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label">First Name *</label>
+                                <InputText @bind-Value="Registration.FirstName" class="form-control" id="firstName" />
+                                <ValidationMessage For="@(() => Registration.FirstName)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label">Last Name *</label>
+                                <InputText @bind-Value="Registration.LastName" class="form-control" id="lastName" />
+                                <ValidationMessage For="@(() => Registration.LastName)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <InputText @bind-Value="Registration.Email" type="email" class="form-control" id="email" />
+                        <ValidationMessage For="@(() => Registration.Email)" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <InputText @bind-Value="Registration.PhoneNumber" type="tel" class="form-control" id="phone" />
+                        <ValidationMessage For="@(() => Registration.PhoneNumber)" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="specialRequirements" class="form-label">Special Requirements</label>
+                        <InputTextArea @bind-Value="Registration.SpecialRequirements" class="form-control" rows="3" id="specialRequirements" 
+                                       placeholder="Any dietary restrictions, accessibility needs, or other special requirements..." />
+                        <ValidationMessage For="@(() => Registration.SpecialRequirements)" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input @bind="AgreeToTerms" class="form-check-input" type="checkbox" id="agreeToTerms">
+                            <label class="form-check-label" for="agreeToTerms">
+                                I agree to the <a href="#" @onclick:preventDefault @onclick="ShowTerms">Terms and Conditions</a> *
+                            </label>
+                        </div>
+                        @if (ShowTermsError)
+                        {
+                            <div class="text-danger small">You must agree to the terms and conditions</div>
+                        }
+                    </div>
+
+                    @if (Event != null)
+                    {
+                        <div class="registration-summary p-3 bg-light rounded mb-3">
+                            <h6>Registration Summary:</h6>
+                            <div class="d-flex justify-content-between">
+                                <span>Event:</span>
+                                <span class="fw-bold">@Event.Title</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Date:</span>
+                                <span>@Event.EventDate.ToString("dd MMM yyyy, HH:mm")</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Location:</span>
+                                <span>@Event.Location</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Price:</span>
+                                <span class="fw-bold @(Event.Price > 0 ? "text-primary" : "text-success")">
+                                    @(Event.Price > 0 ? Event.Price.ToString("C") : "FREE")
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Available Spots:</span>
+                                <span class="@(Event.AvailableSpots < 10 ? "text-warning" : "text-success")">
+                                    @Event.AvailableSpots
+                                </span>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@(!AgreeToTerms || Event?.IsFull == true)">
+                            <i class="fas fa-user-plus me-2"></i>
+                            @(Event?.IsFull == true ? "Event Full" : "Register Now")
+                        </button>
+                        <button type="button" @onclick="OnCancel" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@if (ShowTermsModal)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms and Conditions</h5>
+                    <button type="button" class="btn-close" @onclick="CloseTerms"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Event Registration Terms</h6>
+                    <p>By registering for this event, you agree to the following:</p>
+                    <ul>
+                        <li>You will attend the event at the specified date and time</li>
+                        <li>You understand that registration may be subject to availability</li>
+                        <li>You consent to receive event-related communications</li>
+                        <li>You agree to follow all event guidelines and rules</li>
+                        <li>Cancellation policies may apply as specified by the event organizer</li>
+                        <li>Personal information will be used solely for event management purposes</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseTerms">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Event? Event { get; set; }
+    [Parameter] public EventCallback OnRegistrationComplete { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private Registration Registration = new();
+    private bool IsLoading = false;
+    private bool IsSuccess = false;
+    private bool AgreeToTerms = false;
+    private bool ShowTermsError = false;
+    private bool ShowTermsModal = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (Event != null)
+        {
+            Registration.EventId = Event.Id;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!AgreeToTerms)
+        {
+            ShowTermsError = true;
+            return;
+        }
+
+        ShowTermsError = false;
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            if (Event != null)
+            {
+                // Check if email is already registered
+                var isAlreadyRegistered = await RegistrationService.IsEmailRegisteredForEventAsync(Registration.Email, Event.Id);
+                if (isAlreadyRegistered)
+                {
+                    ErrorMessage = "This email address is already registered for this event.";
+                    IsLoading = false;
+                    return;
+                }
+
+                // Check if event is full
+                var currentRegistrations = await RegistrationService.GetRegistrationCountForEventAsync(Event.Id);
+                if (currentRegistrations >= Event.MaxCapacity)
+                {
+                    ErrorMessage = "Sorry, this event is now full.";
+                    IsLoading = false;
+                    return;
+                }
+
+                // Create registration
+                Registration = await RegistrationService.CreateRegistrationAsync(Registration);
+                
+                // Simulate processing delay
+                await Task.Delay(1500);
+                
+                IsSuccess = true;
+                SessionService.AddRecentActivity($"Registered for: {Event.Title}");
+                await OnRegistrationComplete.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "An error occurred while processing your registration. Please try again.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        Registration = new Registration { EventId = Event?.Id ?? 0 };
+        IsSuccess = false;
+        IsLoading = false;
+        AgreeToTerms = false;
+        ShowTermsError = false;
+        ErrorMessage = string.Empty;
+    }
+
+    private void ShowTerms()
+    {
+        ShowTermsModal = true;
+    }
+
+    private void CloseTerms()
+    {
+        ShowTermsModal = false;
+    }
+}
+
+<style>
+    .registration-form .card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .registration-summary {
+        border-left: 4px solid var(--bs-primary);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+
+    .modal.show {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>

@@ -1,0 +1,408 @@
+@page "/"
+@using EventEase.Models
+@using EventEase.Services
+@using EventEase.Components
+@inject EventService EventService
+@inject SessionService SessionService
+@inject NavigationManager NavigationManager
+
+<PageTitle>EventEase - Home</PageTitle>
+
+<div class="home-page">
+    <!-- Hero Section -->
+    <div class="hero-section text-center py-5 mb-5">
+        <div class="container">
+            <h1 class="display-4 fw-bold text-primary mb-3">
+                <i class="fas fa-calendar-star me-3"></i>
+                Welcome to EventEase
+            </h1>
+            <p class="lead text-muted mb-4">
+                Your comprehensive event management solution. Discover, register, and manage events with ease.
+            </p>
+            <div class="hero-stats row text-center">
+                <div class="col-md-4">
+                    <div class="stat-card p-3">
+                        <h3 class="text-primary">@TotalEvents</h3>
+                        <p class="mb-0">Total Events</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card p-3">
+                        <h3 class="text-success">@UpcomingEvents</h3>
+                        <p class="mb-0">Upcoming Events</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card p-3">
+                        <h3 class="text-info">@TotalRegistrations</h3>
+                        <p class="mb-0">Registrations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Quick Actions -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <div class="quick-actions">
+                    <h2 class="mb-4">
+                        <i class="fas fa-rocket me-2"></i>
+                        Quick Actions
+                    </h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="action-card h-100" @onclick="() => NavigateToEvents()">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                                    <h5>Browse Events</h5>
+                                    <p class="text-muted">Discover upcoming events and activities</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="action-card h-100" @onclick="() => NavigateToRegistration()">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+                                    <h5>Register for Event</h5>
+                                    <p class="text-muted">Sign up for your favorite events</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="recent-activity">
+                    <h3 class="mb-3">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Activity
+                    </h3>
+                    <div class="activity-list">
+                        @if (RecentActivities.Any())
+                        {
+                            @foreach (var activity in RecentActivities.Take(5))
+                            {
+                                <div class="activity-item p-2 mb-2 rounded">
+                                    <small class="text-muted">@activity</small>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-3">
+                                <i class="fas fa-info-circle mb-2"></i>
+                                <p class="mb-0">No recent activity</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Events -->
+        <div class="featured-events mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-star me-2 text-warning"></i>
+                    Featured Events
+                </h2>
+                <a href="/events" class="btn btn-outline-primary">
+                    View All Events
+                    <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            @if (IsLoading)
+            {
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading featured events...</p>
+                </div>
+            }
+            else if (FeaturedEvents.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var eventItem in FeaturedEvents)
+                    {
+                        <div class="col-lg-6" @key="eventItem.Id">
+                            <EventCard Event="@eventItem" 
+                                     OnRegisterClicked="@HandleRegisterClick" 
+                                     OnViewDetails="@HandleViewDetails"
+                                     ShowEditButton="false"
+                                     ShowDeleteButton="false" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="no-events text-center p-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Featured Events</h4>
+                    <p class="text-muted">Check back later for exciting events!</p>
+                </div>
+            }
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section mb-5">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h3 class="text-center mb-4">
+                        <i class="fas fa-search me-2"></i>
+                        Find Your Perfect Event
+                    </h3>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input @bind="SearchTerm" @bind:event="oninput" @onkeypress="HandleSearchKeyPress"
+                                       class="form-control" placeholder="Search events by title, location, or description..." />
+                                <button @onclick="HandleSearch" class="btn btn-primary" type="button">
+                                    Search
+                                </button>
+                            </div>
+                            
+                            @if (SearchHistory.Any())
+                            {
+                                <div class="search-suggestions mt-2">
+                                    <small class="text-muted">Recent searches:</small>
+                                    @foreach (var term in SearchHistory.Take(3))
+                                    {
+                                        <button @onclick="() => SearchWithTerm(term)" class="btn btn-sm btn-outline-secondary ms-1">
+                                            @term
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features-section">
+            <h2 class="text-center mb-5">
+                <i class="fas fa-cogs me-2"></i>
+                Why Choose EventEase?
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                        <h5>Fast Registration</h5>
+                        <p class="text-muted">Quick and easy event registration with real-time validation</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                        <h5>Secure & Reliable</h5>
+                        <p class="text-muted">Your data is safe with our secure event management system</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-mobile-alt fa-3x text-info mb-3"></i>
+                        <h5>Mobile Friendly</h5>
+                        <p class="text-muted">Access events and manage registrations on any device</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Event> FeaturedEvents = new();
+    private List<string> RecentActivities = new();
+    private List<string> SearchHistory = new();
+    private string SearchTerm = string.Empty;
+    private bool IsLoading = false;
+    private int TotalEvents = 0;
+    private int UpcomingEvents = 0;
+    private int TotalRegistrations = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        LoadSessionData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            // Load featured events (upcoming events)
+            FeaturedEvents = await EventService.GetUpcomingEventsAsync();
+            FeaturedEvents = FeaturedEvents.Take(4).ToList(); // Show only 4 featured events
+
+            // Load statistics
+            TotalEvents = await EventService.GetTotalEventsAsync();
+            UpcomingEvents = await EventService.GetUpcomingEventsCountAsync();
+            
+            // Calculate total registrations (this would normally come from a service)
+            TotalRegistrations = FeaturedEvents.Sum(e => e.RegisteredCount);
+            
+            SessionService.AddRecentActivity("Visited home page");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void LoadSessionData()
+    {
+        RecentActivities = SessionService.GetRecentActivities();
+        SearchHistory = SessionService.GetSearchHistory();
+    }
+
+    private void NavigateToEvents()
+    {
+        SessionService.AddRecentActivity("Navigated to events page");
+        NavigationManager.NavigateTo("/events");
+    }
+
+    private void NavigateToRegistration()
+    {
+        SessionService.AddRecentActivity("Navigated to registration page");
+        NavigationManager.NavigateTo("/registration");
+    }
+
+    private async Task HandleRegisterClick(Event eventItem)
+    {
+        SessionService.SetValue("SelectedEventId", eventItem.Id);
+        SessionService.AddRecentActivity($"Started registration for: {eventItem.Title}");
+        NavigationManager.NavigateTo($"/registration?eventId={eventItem.Id}");
+    }
+
+    private async Task HandleViewDetails(Event eventItem)
+    {
+        SessionService.AddRecentActivity($"Viewed details for: {eventItem.Title}");
+        NavigationManager.NavigateTo($"/events/{eventItem.Id}");
+    }
+
+    private async Task HandleSearch()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm.Trim()))
+        {
+            SessionService.AddSearchTerm(SearchTerm);
+            SessionService.AddRecentActivity($"Searched for: {SearchTerm}");
+            NavigationManager.NavigateTo($"/events?search={Uri.EscapeDataString(SearchTerm)}");
+        }
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleSearch();
+        }
+    }
+
+    private async Task SearchWithTerm(string term)
+    {
+        SearchTerm = term;
+        await HandleSearch();
+    }
+}
+
+<style>
+    .home-page {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+
+    .hero-section .text-primary {
+        color: white !important;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .action-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-color: var(--bs-primary);
+    }
+
+    .feature-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .activity-item {
+        background: rgba(108, 117, 125, 0.1);
+        border-left: 3px solid var(--bs-primary);
+        transition: all 0.2s ease;
+    }
+
+    .activity-item:hover {
+        background: rgba(108, 117, 125, 0.2);
+    }
+
+    .search-suggestions button {
+        margin: 2px;
+    }
+
+    .no-events {
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 3rem 1rem !important;
+        }
+        
+        .display-4 {
+            font-size: 2rem !important;
+        }
+    }
+</style>

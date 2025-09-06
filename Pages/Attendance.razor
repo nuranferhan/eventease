@@ -1,0 +1,552 @@
+@page "/attendance"
+@page "/attendance/{eventId:int}"
+@using EventEase.Models
+@using EventEase.Services
+@using EventEase.Components
+@inject EventService EventService
+@inject RegistrationService RegistrationService
+@inject SessionService SessionService
+@inject NavigationManager NavigationManager
+
+<PageTitle>EventEase - Attendance</PageTitle>
+
+<div class="attendance-page">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Attendance Management
+                    </h1>
+                    <p class="text-muted mb-0">Track and manage event attendance</p>
+                </div>
+                <div>
+                    @if (SelectedEvent != null)
+                    {
+                        <button @onclick="BackToEventSelection" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Events
+                        </button>
+                        <button @onclick="RefreshData" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (EventId.HasValue && SelectedEvent != null)
+        {
+            <!-- Attendance Tracker for Selected Event -->
+            <AttendanceTracker Event="@SelectedEvent" />
+        }
+        else
+        {
+            <!-- Event Selection -->
+            <div class="event-selection">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Select Event for Attendance Tracking
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <!-- Search and Filter -->
+                                <div class="row mb-4">
+                                    <div class="col-md-8">
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-search"></i>
+                                            </span>
+                                            <input @bind="SearchTerm" @bind:event="oninput" @onkeypress="HandleSearchKeyPress"
+                                                   class="form-control" placeholder="Search events..." />
+                                            <button @onclick="HandleSearch" class="btn btn-outline-primary" type="button">
+                                                Search
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select @bind="FilterOption" @onchange="ApplyFilter" class="form-select">
+                                            <option value="today">Today's Events</option>
+                                            <option value="upcoming">Upcoming Events</option>
+                                            <option value="past">Past Events</option>
+                                            <option value="all">All Events</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                @if (IsLoading)
+                                {
+                                    <div class="text-center p-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading events...</p>
+                                    </div>
+                                }
+                                else if (AvailableEvents.Any())
+                                {
+                                    <div class="events-list">
+                                        <div class="mb-3">
+                                            <span class="text-muted">@AvailableEvents.Count events found</span>
+                                        </div>
+
+                                        @foreach (var eventItem in AvailableEvents)
+                                        {
+                                            <div class="event-item mb-3" @key="eventItem.Id">
+                                                <div class="card event-selection-card @(IsEventActive(eventItem) ? "border-success" : "")" 
+                                                     @onclick="() => SelectEvent(eventItem)">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-md-8">
+                                                                <h5 class="card-title mb-1">@eventItem.Title</h5>
+                                                                <p class="card-text text-muted mb-2">@eventItem.Description</p>
+                                                                
+                                                                <div class="event-meta">
+                                                                    <div class="d-flex flex-wrap gap-3">
+                                                                        <span class="text-muted small">
+                                                                            <i class="fas fa-calendar me-1"></i>
+                                                                            @eventItem.EventDate.ToString("dd MMM yyyy, HH:mm")
+                                                                        </span>
+                                                                        <span class="text-muted small">
+                                                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                                                            @eventItem.Location
+                                                                        </span>
+                                                                        <span class="text-muted small">
+                                                                            <i class="fas fa-users me-1"></i>
+                                                                            @eventItem.RegisteredCount registered
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 text-end">
+                                                                <div class="event-status mb-2">
+                                                                    @if (IsEventActive(eventItem))
+                                                                    {
+                                                                        <span class="badge bg-success fs-6">
+                                                                            <i class="fas fa-play me-1"></i>
+                                                                            Active Now
+                                                                        </span>
+                                                                    }
+                                                                    else if (eventItem.IsUpcoming)
+                                                                    {
+                                                                        <span class="badge bg-primary fs-6">
+                                                                            <i class="fas fa-clock me-1"></i>
+                                                                            Upcoming
+                                                                        </span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="badge bg-secondary fs-6">
+                                                                            <i class="fas fa-history me-1"></i>
+                                                                            Past Event
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                                
+                                                                <button class="btn btn-outline-primary">
+                                                                    <i class="fas fa-clipboard-check me-1"></i>
+                                                                    Manage Attendance
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="no-events text-center p-4">
+                                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">No Events Found</h5>
+                                        @if (!string.IsNullOrEmpty(SearchTerm))
+                                        {
+                                            <p class="text-muted">No events match your search criteria.</p>
+                                            <button @onclick="ClearSearch" class="btn btn-outline-primary">
+                                                <i class="fas fa-times me-1"></i>
+                                                Clear Search
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted">No events available for attendance tracking.</p>
+                                            <a href="/events" class="btn btn-primary">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Create New Event
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="attendance-statistics">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        Attendance Overview
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stat-item mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Today's Events</span>
+                                            <span class="badge bg-success">@TodaysEventsCount</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Active Events</span>
+                                            <span class="badge bg-primary">@ActiveEventsCount</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Total Attendees Today</span>
+                                            <span class="badge bg-info">@TotalAttendeesToday</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        Quick Tips
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="tips-list">
+                                        <div class="tip-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Use the search feature to quickly find specific events</small>
+                                        </div>
+                                        <div class="tip-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Active events show real-time attendance tracking</small>
+                                        </div>
+                                        <div class="tip-item mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Export attendance data for record keeping</small>
+                                        </div>
+                                        <div class="tip-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <small>Check-in attendees using name, email, or confirmation code</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                @if (RecentActivities.Any())
+                {
+                    <div class="recent-activity mt-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-history me-2"></i>
+                                    Recent Attendance Activity
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="activity-timeline">
+                                    @foreach (var activity in RecentActivities.Take(5))
+                                    {
+                                        <div class="activity-item">
+                                            <i class="fas fa-circle activity-dot"></i>
+                                            <span class="activity-text">@activity</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? EventId { get; set; }
+
+    private Event? SelectedEvent;
+    private List<Event> AvailableEvents = new();
+    private List<string> RecentActivities = new();
+    private string SearchTerm = string.Empty;
+    private string FilterOption = "today";
+    private bool IsLoading = false;
+    private int TodaysEventsCount = 0;
+    private int ActiveEventsCount = 0;
+    private int TotalAttendeesToday = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EventId.HasValue)
+        {
+            await LoadSelectedEvent(EventId.Value);
+        }
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            await LoadEvents();
+            LoadRecentActivities();
+            await CalculateStatistics();
+            SessionService.AddRecentActivity("Visited attendance page");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadSelectedEvent(int id)
+    {
+        SelectedEvent = await EventService.GetEventByIdAsync(id);
+        if (SelectedEvent != null)
+        {
+            SessionService.AddRecentActivity($"Managing attendance for: {SelectedEvent.Title}");
+        }
+    }
+
+    private async Task LoadEvents()
+    {
+        var allEvents = await EventService.GetAllEventsAsync();
+        await ApplyFilters(allEvents);
+    }
+
+    private async Task ApplyFilters(List<Event> events)
+    {
+        var filteredEvents = events.AsQueryable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filteredEvents = filteredEvents.Where(e => 
+                e.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Description.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Location.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply date filters
+        var today = DateTime.Today;
+        filteredEvents = FilterOption switch
+        {
+            "today" => filteredEvents.Where(e => e.EventDate.Date == today),
+            "upcoming" => filteredEvents.Where(e => e.EventDate > DateTime.Now),
+            "past" => filteredEvents.Where(e => e.EventDate < DateTime.Now),
+            _ => filteredEvents
+        };
+
+        AvailableEvents = filteredEvents.Where(e => e.IsActive)
+                                      .OrderBy(e => e.EventDate)
+                                      .ToList();
+    }
+
+    private async Task CalculateStatistics()
+    {
+        var today = DateTime.Today;
+        var now = DateTime.Now;
+        
+        TodaysEventsCount = AvailableEvents.Count(e => e.EventDate.Date == today);
+        ActiveEventsCount = AvailableEvents.Count(e => IsEventActive(e));
+        
+        // Calculate total attendees today (this would come from attendance records)
+        TotalAttendeesToday = AvailableEvents.Where(e => e.EventDate.Date == today)
+                                           .Sum(e => e.RegisteredCount);
+    }
+
+    private bool IsEventActive(Event eventItem)
+    {
+        var now = DateTime.Now;
+        var eventStart = eventItem.EventDate;
+        var eventEnd = eventItem.EventDate.AddHours(3); // Assume 3-hour duration
+        
+        return now >= eventStart.AddMinutes(-30) && now <= eventEnd.AddMinutes(30);
+    }
+
+    private void LoadRecentActivities()
+    {
+        RecentActivities = SessionService.GetRecentActivities();
+    }
+
+    private async Task SelectEvent(Event eventItem)
+    {
+        NavigationManager.NavigateTo($"/attendance/{eventItem.Id}");
+    }
+
+    private async Task HandleSearch()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm.Trim()))
+        {
+            SessionService.AddSearchTerm(SearchTerm);
+            SessionService.AddRecentActivity($"Searched attendance events: {SearchTerm}");
+        }
+        await LoadEvents();
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleSearch();
+        }
+    }
+
+    private async Task ApplyFilter(ChangeEventArgs e)
+    {
+        FilterOption = e.Value?.ToString() ?? "today";
+        await LoadEvents();
+        SessionService.AddRecentActivity($"Filtered attendance events: {FilterOption}");
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        await LoadEvents();
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+        SessionService.AddRecentActivity("Refreshed attendance data");
+    }
+
+    private void BackToEventSelection()
+    {
+        NavigationManager.NavigateTo("/attendance");
+    }
+}
+
+<style>
+    .attendance-page {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .page-header {
+        border-bottom: 2px solid var(--bs-info);
+        padding-bottom: 1rem;
+    }
+
+    .event-selection-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+    }
+
+    .event-selection-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-color: var(--bs-primary);
+    }
+
+    .event-selection-card.border-success {
+        border-width: 2px !important;
+        animation: pulse 2s infinite;
+    }
+
+    .event-meta {
+        font-size: 0.875rem;
+    }
+
+    .stat-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .tips-list .tip-item {
+        padding: 0.25rem 0;
+    }
+
+    .activity-timeline {
+        position: relative;
+    }
+
+    .activity-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-left: 2px solid #e9ecef;
+    }
+
+    .activity-item:last-child {
+        border-left: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .activity-dot {
+        position: absolute;
+        left: -6px;
+        top: 0.25rem;
+        color: var(--bs-primary);
+        font-size: 0.75rem;
+    }
+
+    .activity-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .no-events {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+
+    @media (max-width: 768px) {
+        .event-meta .d-flex {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        
+        .page-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+</style>
