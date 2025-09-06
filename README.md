@@ -101,6 +101,3 @@ builder.Services.AddScoped<SessionService>();
 2. Select active event
 3. Check-in/check-out attendees
 4. Export CSV if needed
-
-İstersen ben bunu **bir tık daha görsel odaklı ve “GitHub showcase” tarzı** hâle getirip bölüm başlıklarını da kart veya ikonlarla zenginleştirebilirim. Bunu yapayım mı?
-```
