@@ -1,14 +1,15 @@
 # EventEase - Comprehensive Event Management System
 
-A complete Blazor Server application for managing events, registrations and attendance tracking with a modern, responsive UI and comprehensive feature set.
+A Blazor Server application for managing events, registrations, and attendance tracking with a modern, responsive UI.
 
-## Project Overview
+## Overview
 
 <div align="center">
-  <img width="85%" alt="Image" src="https://github.com/user-attachments/assets/e56daa88-1fba-48ed-a651-df68679712c5" />
+  <img width="85%" alt="EventEase Screenshot" src="https://github.com/user-attachments/assets/e56daa88-1fba-48ed-a651-df68679712c5" />
 </div>
 
-EventEase is a full featured event management system built with Blazor Server that provides seamless event creation, registration management and real time attendance tracking. The application demonstrates advanced Blazor concepts including component architecture, state management and performance optimization.
+EventEase provides seamless event creation, registration management, and real-time attendance tracking.  
+Built with Blazor Server, it demonstrates component architecture, state management, and performance optimization.
 
 ## Project Structure
 
@@ -42,237 +43,64 @@ EventEase/
 ├── Program.cs                       # Application startup and configuration
 ├── App.razor                        # Blazor app component
 └── EventEase.csproj                 # Project file
-```
+````
 
 ## Key Features
 
-### Dashboard (Index.razor)
-- Hero section with key statistics
-- Quick actions for fast navigation
-- Featured events showcase
-- Global search functionality
-- Recent activity tracking
-- Mobile friendly responsive design
-
-### Event Management (Events.razor)
-- Event listing with grid and list view modes
-- Advanced real time search with filters
-- Comprehensive event information display
-- Full CRUD operations
-- Event status and capacity management
-- Deep linking with route parameters
-
-### Registration System (Registration.razor)
-- Multi step registration process
-- Comprehensive client side validation
-- Real time feedback and validation messages
-- Terms & conditions handling
-- Unique confirmation code generation
-- Email based duplicate prevention
-
-### Attendance Tracking (Attendance.razor)
-- Real time check in monitoring
-- Multi criteria attendee search
-- CSV export functionality
-- Check in/check out time management
-- Visual status indicators and progress tracking
-
-### Component Architecture
-
-**EventCard Component**
-- Two way data binding with real time updates
-- Inline editing capabilities
-- Parent child communication through event callbacks
-- Mobile optimized responsive design
-- Visual states for interaction feedback
-
-**RegistrationForm Component**
-- Progressive form completion
-- DataAnnotations validation integration
-- User friendly error handling
-- Processing indicators and loading states
-- Registration confirmation feedback
-
-**AttendanceTracker Component**
-- Live attendance updates
-- Integrated search functionality
-- Data export capabilities
-- Visual dashboard with statistics
-- Quick action buttons for efficiency
-
-## Technical Implementation
-
-### State Management
-- Centralized session data management through SessionService
-- User action tracking and recent activities
-- Search term persistence
-- Login state management
-
-### Performance Optimizations
-- Component level lazy loading
-- Debounced search for optimal performance
-- Efficient rendering with @key directives
-- Proper service disposal and memory management
-
-### Validation & Error Handling
-- Real time client side validation
-- Custom business rule validators
-- Graceful error handling with boundaries
-- Comprehensive user feedback systems
-
-### Responsive Design
-- Mobile first optimization approach
-- Bootstrap integration for professional UI
-- Custom CSS with animations
-- WCAG accessibility compliance considerations
+- **Dashboard** – Hero stats, featured events, quick actions  
+- **Event Management** – CRUD, filters, search, capacity & status control  
+- **Registration** – Multi-step forms, validation, confirmation codes  
+- **Attendance Tracking** – Real-time check-in/out, attendee search, CSV export  
+- **Component Architecture** – EventCard, RegistrationForm, AttendanceTracker  
+- **Responsive Design** – Mobile-first with Bootstrap & custom CSS  
+- **Security & Performance** – Input validation, CSRF protection, lazy loading, efficient rendering  
 
 ## Getting Started
 
 ### Prerequisites
-- .NET 6 SDK or later
-- Visual Studio 2022 or VS Code
-- Modern web browser
+- .NET 6 SDK or later  
+- Visual Studio 2022 / VS Code  
 
-### Installation Steps
+### Quick Start
+1. Clone the repository  
+2. Run `dotnet run` in the project folder  
+3. Open `https://localhost:5001` in your browser  
 
-1. **Clone the Repository**
-   ```bash
-   git clone <repository-url>
-   cd EventEase
-   ```
+## Configuration
 
-2. **Restore Dependencies**
-   ```bash
-   dotnet restore
-   ```
+### Service Registration (`Program.cs`)
+```csharp
+builder.Services.AddSingleton<EventService>();
+builder.Services.AddSingleton<RegistrationService>();
+builder.Services.AddScoped<SessionService>();
+````
 
-3. **Build the Application**
-   ```bash
-   dotnet build
-   ```
+## Data Models
 
-4. **Run the Application**
-   ```bash
-   dotnet run
-   ```
-
-5. **Access the Application**
-   - Open browser to `https://localhost:7XXX`
-   - The port number will be displayed in the console
-
-### Development Setup
-
-For development with hot reload:
-```bash
-dotnet watch run
-```
+* **Event** – Title, description, date, location, capacity, price, status
+* **Registration** – Personal info, contact details, validation, confirmation code
+* **Attendance** – Check-in/out times, duration, status, notes
 
 ## Usage Guide
 
 ### Creating Events
-1. Navigate to Events page
-2. Click "Create Event" button
-3. Fill in event details
-4. Save and publish
+
+1. Go to **Events** page
+2. Click **Create Event**
+3. Fill details and save
 
 ### Managing Registrations
-1. Select an event from the Events page
-2. Click "Register" button
-3. Complete registration form
-4. Receive confirmation code
+
+1. Select an event
+2. Click **Register**
+3. Complete the form and get confirmation
 
 ### Tracking Attendance
-1. Go to Attendance page
+
+1. Open **Attendance** page
 2. Select active event
-3. Search for attendees
-4. Check in/Check out attendees
-5. Export attendance data
+3. Check-in/check-out attendees
+4. Export CSV if needed
 
-## Configuration
-
-### Service Registration (Program.cs)
-```csharp
-// Custom services
-builder.Services.AddSingleton<EventService>();
-builder.Services.AddSingleton<RegistrationService>();
-builder.Services.AddScoped<SessionService>();
+İstersen ben bunu **bir tık daha görsel odaklı ve “GitHub showcase” tarzı** hâle getirip bölüm başlıklarını da kart veya ikonlarla zenginleştirebilirim. Bunu yapayım mı?
 ```
-
-### Layout Configuration
-- Main layout uses responsive sidebar navigation
-- Top bar with search and user controls
-- Mobile optimized navigation menu
-
-## Data Models
-
-### Event Model
-- Title, Description, Date, Location
-- Capacity management
-- Price configuration
-- Image URL support
-- Status tracking
-
-### Registration Model
-- Personal information fields
-- Contact details
-- Special requirements
-- Confirmation system
-- Validation attributes
-
-### Attendance Model
-- Check in/check out times
-- Duration calculation
-- Status tracking
-- Notes and metadata
-
-## Advanced Features
-
-### Search & Filtering
-- Real time search across multiple fields
-- Filter by date, price and availability
-- Search history and suggestions
-- Debounced input for performance
-
-### Session Management
-- User activity tracking
-- Recent actions history
-- Search term persistence
-- Login state management
-
-### Export Capabilities
-- CSV export for attendance records
-- Formatted data with proper headers
-- Download functionality
-- Print friendly layouts
-
-## Deployment
-
-### Production Deployment
-1. **Publish the Application**
-   ```bash
-   dotnet publish -c Release -o ./publish
-   ```
-
-2. **Configure Hosting**
-   - Set up IIS or similar web server
-   - Configure HTTPS certificates
-   - Set environment variables
-
-3. **Database Setup** (if extending)
-   - Configure connection strings
-   - Run database migrations
-   - Set up backup procedures
-
-## Performance Considerations
-
-- Component optimization with efficient rendering using @key directives
-- Minimal state updates and proper disposal
-- Debounced input and cached search results
-- Proper service lifetime management
-
-## Security Features
-
-- Comprehensive input validation
-- XSS prevention through proper data sanitization
-- Built in Blazor Server CSRF protections
-- Secure session management
