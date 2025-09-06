@@ -4,6 +4,10 @@ A complete Blazor Server application for managing events, registrations and atte
 
 ## Project Overview
 
+<div align="center">
+  <img width="85%" alt="Image" src="https://github.com/user-attachments/assets/e56daa88-1fba-48ed-a651-df68679712c5" />
+</div>
+
 EventEase is a full featured event management system built with Blazor Server that provides seamless event creation, registration management and real time attendance tracking. The application demonstrates advanced Blazor concepts including component architecture, state management and performance optimization.
 
 ## Project Structure
