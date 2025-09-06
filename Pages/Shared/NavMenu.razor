@@ -2,71 +2,109 @@
 @inject NavigationManager NavigationManager
 @inject SessionService SessionService
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">
-            <i class="fas fa-calendar-star me-2"></i>
-            EventEase
-        </a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<div class="nav-header">
+    <div class="brand-section">
+        <div class="brand-icon">
+            <i class="fas fa-calendar-star"></i>
+        </div>
+        <div class="brand-info">
+            <h1 class="brand-title">EventEase</h1>
+            <small class="brand-subtitle">Event Management</small>
+        </div>
     </div>
+    <button title="Close menu" class="navbar-toggler d-md-none" @onclick="ToggleNavMenu">
+        <i class="fas fa-times"></i>
+    </button>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="CollapseNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="events">
-                <span class="oi oi-calendar" aria-hidden="true"></span> Events
-            </NavLink>
-        </div>
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="registration">
-                <span class="oi oi-person" aria-hidden="true"></span> Registration
-            </NavLink>
-        </div>
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="attendance">
-                <span class="oi oi-clipboard" aria-hidden="true"></span> Attendance
-            </NavLink>
+<div class="nav-content @NavMenuCssClass" @onclick="CollapseNavMenu">
+    <nav class="nav-menu">
+        <!-- Main Menu -->
+        <div class="nav-section">
+            <div class="nav-item">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <div class="nav-link-content">
+                        <i class="fas fa-home nav-icon"></i>
+                        <span class="nav-text">Home</span>
+                    </div>
+                </NavLink>
+            </div>
+            
+            <div class="nav-item">
+                <NavLink class="nav-link" href="events">
+                    <div class="nav-link-content">
+                        <i class="fas fa-calendar nav-icon"></i>
+                        <span class="nav-text">Events</span>
+                        @if (TotalEvents > 0)
+                        {
+                            <span class="nav-badge">@TotalEvents</span>
+                        }
+                    </div>
+                </NavLink>
+            </div>
+            
+            <div class="nav-item">
+                <NavLink class="nav-link" href="registration">
+                    <div class="nav-link-content">
+                        <i class="fas fa-user-plus nav-icon"></i>
+                        <span class="nav-text">Registration</span>
+                    </div>
+                </NavLink>
+            </div>
+            
+            <div class="nav-item">
+                <NavLink class="nav-link" href="attendance">
+                    <div class="nav-link-content">
+                        <i class="fas fa-clipboard-check nav-icon"></i>
+                        <span class="nav-text">Attendance</span>
+                    </div>
+                </NavLink>
+            </div>
         </div>
 
-        <hr class="nav-divider" />
+        <div class="nav-divider"></div>
         
-        <!-- Quick Stats Section -->
+        <!-- Statistics -->
         <div class="nav-section">
-            <div class="nav-section-title">Quick Stats</div>
-            <div class="nav-stats">
-                <div class="stat-item">
-                    <i class="fas fa-calendar-alt text-info"></i>
-                    <span>@TotalEvents Events</span>
+            <div class="nav-section-header">
+                <i class="fas fa-chart-bar"></i>
+                <span>Quick Statistics</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon stat-primary">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@TotalEvents</div>
+                        <div class="stat-label">Events</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <i class="fas fa-users text-success"></i>
-                    <span>@TotalRegistrations Registrations</span>
+                <div class="stat-card">
+                    <div class="stat-icon stat-success">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@TotalRegistrations</div>
+                        <div class="stat-label">Registrations</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity Section -->
+        <!-- Recent Activities -->
         @if (RecentActivities.Any())
         {
             <div class="nav-section">
-                <div class="nav-section-title">Recent Activity</div>
-                <div class="nav-activity">
+                <div class="nav-section-header">
+                    <i class="fas fa-clock"></i>
+                    <span>Recent Activity</span>
+                </div>
+                <div class="activity-list">
                     @foreach (var activity in RecentActivities.Take(3))
                     {
                         <div class="activity-item">
-                            <i class="fas fa-circle activity-dot"></i>
+                            <div class="activity-indicator"></div>
                             <span class="activity-text">@activity</span>
                         </div>
                     }
@@ -75,16 +113,19 @@
         }
 
         <!-- Quick Actions -->
-        <div class="nav-section mt-auto">
-            <div class="nav-section-title">Quick Actions</div>
-            <div class="quick-actions">
-                <button @onclick="NavigateToEvents" class="btn btn-sm btn-outline-light w-100 mb-2">
-                    <i class="fas fa-search me-1"></i>
-                    Find Events
+        <div class="nav-section nav-actions">
+            <div class="nav-section-header">
+                <i class="fas fa-bolt"></i>
+                <span>Quick Actions</span>
+            </div>
+            <div class="action-buttons">
+                <button @onclick="NavigateToEvents" class="action-btn action-primary">
+                    <i class="fas fa-search"></i>
+                    <span>Find Events</span>
                 </button>
-                <button @onclick="NavigateToRegister" class="btn btn-sm btn-outline-light w-100">
-                    <i class="fas fa-plus me-1"></i>
-                    Quick Register
+                <button @onclick="NavigateToRegister" class="action-btn action-success">
+                    <i class="fas fa-plus"></i>
+                    <span>Quick Register</span>
                 </button>
             </div>
         </div>
@@ -97,7 +138,7 @@
     private int TotalEvents = 0;
     private int TotalRegistrations = 0;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapsed" : "expanded";
 
     protected override void OnInitialized()
     {
@@ -108,10 +149,8 @@
     private void LoadData()
     {
         RecentActivities = SessionService.GetRecentActivities();
-        
-        // In a real application, these would be loaded from services
-        TotalEvents = 4; // Placeholder
-        TotalRegistrations = 12; // Placeholder
+        TotalEvents = 4;
+        TotalRegistrations = 12;
     }
 
     private void OnStateChanged()
@@ -127,7 +166,10 @@
 
     private void CollapseNavMenu()
     {
-        collapseNavMenu = true;
+        if (!collapseNavMenu)
+        {
+            collapseNavMenu = true;
+        }
     }
 
     private void NavigateToEvents()
@@ -139,7 +181,7 @@
 
     private void NavigateToRegister()
     {
-        SessionService.AddRecentActivity("Quick navigation to registration");
+        SessionService.AddRecentActivity("Quick navigation to registration page");
         NavigationManager.NavigateTo("/registration");
         CollapseNavMenu();
     }
@@ -151,153 +193,346 @@
 }
 
 <style>
-    .top-row {
-        height: 3.5rem;
-        background-color: rgba(0,0,0,.4);
-    }
-
-    .navbar-brand {
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: white !important;
-    }
-
-    .oi {
-        width: 2rem;
-        font-size: 1.1rem;
-        vertical-align: text-top;
-        top: -2px;
-    }
-
-    .nav-item {
-        font-size: 0.9rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .nav-item:first-of-type {
-        padding-top: 1rem;
-    }
-
-    .nav-item:last-of-type {
-        padding-bottom: 1rem;
-    }
-
-    .nav-link {
-        border-radius: 4px;
-        height: 3rem;
+    .nav-header {
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
-        line-height: 3rem;
-        color: #d7d7d7 !important;
+        justify-content: space-between;
+    }
+
+    .brand-section {
+        display: flex;
+        align-items: center;
+    }
+
+    .brand-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .brand-icon i {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .brand-title {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .brand-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        display: block;
+        margin-top: 2px;
+    }
+
+    .navbar-toggler {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 8px;
+        border-radius: 6px;
         transition: all 0.2s ease;
     }
 
-    .nav-link:hover {
-        background-color: rgba(255,255,255,.1);
-        color: white !important;
+    .navbar-toggler:hover {
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
-    .nav-link.active {
-        background-color: rgba(255,255,255,.25);
-        color: white !important;
+    .nav-content {
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        transition: all 0.3s ease;
     }
 
-    .nav-divider {
-        border: 0;
-        height: 1px;
-        background-color: rgba(255,255,255,0.2);
-        margin: 1rem 0;
+    .nav-content.collapsed {
+        display: none;
+    }
+
+    .nav-content.expanded {
+        display: block;
+    }
+
+    .nav-menu {
+        padding: 1rem 0;
     }
 
     .nav-section {
+        margin-bottom: 2rem;
         padding: 0 1rem;
-        margin-bottom: 1rem;
     }
 
-    .nav-section-title {
-        color: #b8b8b8;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
-        padding-left: 0.5rem;
-    }
-
-    .nav-stats .stat-item {
+    .nav-section-header {
         display: flex;
         align-items: center;
-        color: #d7d7d7;
+        color: rgba(255, 255, 255, 0.6);
         font-size: 0.8rem;
-        margin-bottom: 0.25rem;
-        padding-left: 0.5rem;
-    }
-
-    .nav-stats .stat-item i {
-        width: 1.2rem;
-        margin-right: 0.5rem;
-    }
-
-    .nav-activity {
-        max-height: 120px;
-        overflow-y: auto;
-    }
-
-    .activity-item {
-        position: relative;
-        padding-left: 1rem;
-        margin-bottom: 0.5rem;
-        color: #d7d7d7;
-    }
-
-    .activity-dot {
-        position: absolute;
-        left: 0;
-        top: 0.2rem;
-        font-size: 0.4rem;
-        color: #28a745;
-    }
-
-    .activity-text {
-        font-size: 0.75rem;
-        line-height: 1.2;
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .quick-actions {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
         padding: 0 0.5rem;
     }
 
-    .quick-actions .btn {
-        font-size: 0.8rem;
-        padding: 0.375rem 0.75rem;
-        border-color: rgba(255,255,255,0.3);
-        color: #d7d7d7;
-        transition: all 0.2s ease;
+    .nav-section-header i {
+        margin-right: 8px;
+        width: 16px;
     }
 
-    .quick-actions .btn:hover {
-        background-color: rgba(255,255,255,0.1);
-        border-color: rgba(255,255,255,0.5);
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+        display: block;
+        padding: 0;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-link:hover {
+        transform: translateX(5px);
+    }
+
+    .nav-link-content {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        color: rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+    }
+
+    .nav-link:hover .nav-link-content {
+        background-color: rgba(255, 255, 255, 0.1);
         color: white;
-        transform: translateY(-1px);
     }
 
-    @media (max-width: 640.98px) {
-        .top-row {
-            justify-content: space-between;
+    .nav-link.active .nav-link-content {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-icon {
+        width: 20px;
+        margin-right: 12px;
+        text-align: center;
+    }
+
+    .nav-text {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .nav-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+        margin: 1.5rem 1rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+
+    .stat-icon.stat-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-icon.stat-success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        color: white;
+    }
+
+    .stat-number {
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .activity-list {
+        space-y: 8px;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .activity-indicator {
+        width: 8px;
+        height: 8px;
+        background: #28a745;
+        border-radius: 50%;
+        margin-right: 10px;
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+    .activity-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    .nav-actions {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+    .action-btn.action-primary:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    .action-btn.action-success:hover {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        border-color: #56ab2f;
+    }
+
+    .action-btn i {
+        margin-right: 8px;
+        width: 16px;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .nav-content.collapsed {
+            display: none;
+        }
+        
+        .nav-content.expanded {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+            z-index: 1050;
+            overflow-y: auto;
         }
 
-        .nav-item {
-            font-size: 1rem;
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (min-width: 769px) {
+        .nav-content {
+            display: block !important;
         }
 
-        .nav-link {
-            height: 3.5rem;
-            line-height: 3.5rem;
+        .navbar-toggler {
+            display: none;
         }
+    }
+
+    /* Scrollbar */
+    .nav-content::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .nav-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+    }
+
+    .nav-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
     }
 </style>

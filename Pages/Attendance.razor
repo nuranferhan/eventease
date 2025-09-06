@@ -72,7 +72,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <select @bind="FilterOption" @onchange="ApplyFilter" class="form-select">
+                                        <select @bind="FilterOption" @bind:event="onchange" class="form-select">
                                             <option value="today">Today's Events</option>
                                             <option value="upcoming">Upcoming Events</option>
                                             <option value="past">Past Events</option>
@@ -527,18 +527,18 @@
         align-items: center;
     }
 
-    @keyframes fadeIn {
+    @@keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes pulse {
+    @@keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
         70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
         100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
     }
 
-    @media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .event-meta .d-flex {
             flex-direction: column !important;
             gap: 0.5rem !important;

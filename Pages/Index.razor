@@ -12,30 +12,30 @@
     <!-- Hero Section -->
     <div class="hero-section text-center py-5 mb-5">
         <div class="container">
-            <h1 class="display-4 fw-bold text-primary mb-3">
+            <h1 class="display-4 fw-bold hero-title mb-3">
                 <i class="fas fa-calendar-star me-3"></i>
                 Welcome to EventEase
             </h1>
-            <p class="lead text-muted mb-4">
+            <p class="lead hero-subtitle mb-4">
                 Your comprehensive event management solution. Discover, register, and manage events with ease.
             </p>
-            <div class="hero-stats row text-center">
+            <div class="hero-stats row text-center g-3">
                 <div class="col-md-4">
-                    <div class="stat-card p-3">
-                        <h3 class="text-primary">@TotalEvents</h3>
-                        <p class="mb-0">Total Events</p>
+                    <div class="stat-card p-4">
+                        <h3 class="stat-number">@TotalEvents </h3>
+                        <p class="stat-label mb-0">Total Events</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="stat-card p-3">
-                        <h3 class="text-success">@UpcomingEvents</h3>
-                        <p class="mb-0">Upcoming Events</p>
+                    <div class="stat-card p-4">
+                        <h3 class="stat-number text-success">@UpcomingEvents </h3>
+                        <p class="stat-label mb-0">Upcoming Events</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="stat-card p-3">
-                        <h3 class="text-info">@TotalRegistrations</h3>
-                        <p class="mb-0">Registrations</p>
+                    <div class="stat-card p-4">
+                        <h3 class="stat-number text-info">@TotalRegistrations </h3>
+                        <p class="stat-label mb-0">Registrations</p>
                     </div>
                 </div>
             </div>
@@ -44,29 +44,37 @@
 
     <div class="container">
         <!-- Quick Actions -->
-        <div class="row mb-5">
+        <div class="row mb-5 g-4">
             <div class="col-lg-8">
                 <div class="quick-actions">
-                    <h2 class="mb-4">
+                    <h2 class="section-title mb-4">
                         <i class="fas fa-rocket me-2"></i>
                         Quick Actions
                     </h2>
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <div class="col-md-6">
                             <div class="action-card h-100" @onclick="() => NavigateToEvents()">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
-                                    <h5>Browse Events</h5>
-                                    <p class="text-muted">Discover upcoming events and activities</p>
+                                <div class="action-content">
+                                    <div class="action-icon">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <h5 class="action-title">Browse Events</h5>
+                                        <p class="action-description">Discover upcoming events and activities</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="action-card h-100" @onclick="() => NavigateToRegistration()">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
-                                    <h5>Register for Event</h5>
-                                    <p class="text-muted">Sign up for your favorite events</p>
+                                <div class="action-content">
+                                    <div class="action-icon success">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <h5 class="action-title">Register for Event</h5>
+                                        <p class="action-description">Sign up for your favorite events</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -75,25 +83,31 @@
             </div>
             <div class="col-lg-4">
                 <div class="recent-activity">
-                    <h3 class="mb-3">
+                    <h3 class="section-title mb-4">
                         <i class="fas fa-history me-2"></i>
                         Recent Activity
                     </h3>
-                    <div class="activity-list">
+                    <div class="activity-container">
                         @if (RecentActivities.Any())
                         {
-                            @foreach (var activity in RecentActivities.Take(5))
-                            {
-                                <div class="activity-item p-2 mb-2 rounded">
-                                    <small class="text-muted">@activity</small>
-                                </div>
-                            }
+                            <div class="activity-list">
+                                @foreach (var activity in RecentActivities.Take(5))
+                                {
+                                    <div class="activity-item">
+                                        <div class="activity-indicator"></div>
+                                        <div class="activity-content">
+                                            <small class="activity-text">@activity</small>
+                                            <small class="activity-time">Just now</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         }
                         else
                         {
-                            <div class="text-center text-muted p-3">
-                                <i class="fas fa-info-circle mb-2"></i>
-                                <p class="mb-0">No recent activity</p>
+                            <div class="no-activity">
+                                <i class="fas fa-info-circle"></i>
+                                <p>No recent activity</p>
                             </div>
                         }
                     </div>
@@ -104,23 +118,23 @@
         <!-- Featured Events -->
         <div class="featured-events mb-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>
+                <h2 class="section-title">
                     <i class="fas fa-star me-2 text-warning"></i>
                     Featured Events
                 </h2>
                 <a href="/events" class="btn btn-outline-primary">
                     View All Events
-                    <i class="fas fa-arrow-right ms-1"></i>
+                    <i class="fas fa-arrow-right ms-2"></i>
                 </a>
             </div>
 
             @if (IsLoading)
             {
-                <div class="text-center p-4">
+                <div class="loading-container">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-2">Loading featured events...</p>
+                    <p class="loading-text">Loading featured events...</p>
                 </div>
             }
             else if (FeaturedEvents.Any())
@@ -140,79 +154,47 @@
             }
             else
             {
-                <div class="no-events text-center p-5">
-                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                    <h4 class="text-muted">No Featured Events</h4>
-                    <p class="text-muted">Check back later for exciting events!</p>
+                <div class="no-events">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Featured Events</h4>
+                    <p>Check back later for exciting events!</p>
                 </div>
             }
         </div>
 
-        <!-- Search Section -->
-        <div class="search-section mb-5">
-            <div class="card border-0 bg-light">
-                <div class="card-body">
-                    <h3 class="text-center mb-4">
-                        <i class="fas fa-search me-2"></i>
-                        Find Your Perfect Event
-                    </h3>
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                                <input @bind="SearchTerm" @bind:event="oninput" @onkeypress="HandleSearchKeyPress"
-                                       class="form-control" placeholder="Search events by title, location, or description..." />
-                                <button @onclick="HandleSearch" class="btn btn-primary" type="button">
-                                    Search
-                                </button>
-                            </div>
-                            
-                            @if (SearchHistory.Any())
-                            {
-                                <div class="search-suggestions mt-2">
-                                    <small class="text-muted">Recent searches:</small>
-                                    @foreach (var term in SearchHistory.Take(3))
-                                    {
-                                        <button @onclick="() => SearchWithTerm(term)" class="btn btn-sm btn-outline-secondary ms-1">
-                                            @term
-                                        </button>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Features Section -->
         <div class="features-section">
-            <h2 class="text-center mb-5">
+            <h2 class="section-title text-center mb-5">
                 <i class="fas fa-cogs me-2"></i>
                 Why Choose EventEase?
             </h2>
             <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="feature-card text-center p-4">
-                        <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
-                        <h5>Fast Registration</h5>
-                        <p class="text-muted">Quick and easy event registration with real-time validation</p>
+                    <div class="feature-card">
+                        <div class="feature-icon warning">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h5 class="feature-title">Fast Registration</h5>
+                        <p class="feature-description">Quick and easy event registration with real-time validation</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="feature-card text-center p-4">
-                        <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
-                        <h5>Secure & Reliable</h5>
-                        <p class="text-muted">Your data is safe with our secure event management system</p>
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h5 class="feature-title">Secure & Reliable</h5>
+                        <p class="feature-description">Your data is safe with our secure event management system</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="feature-card text-center p-4">
-                        <i class="fas fa-mobile-alt fa-3x text-info mb-3"></i>
-                        <h5>Mobile Friendly</h5>
-                        <p class="text-muted">Access events and manage registrations on any device</p>
+                    <div class="feature-card">
+                        <div class="feature-icon info">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h5 class="feature-title">Mobile Friendly</h5>
+                        <p class="feature-description">Access events and manage registrations on any device</p>
                     </div>
                 </div>
             </div>
@@ -319,90 +301,443 @@
 <style>
     .home-page {
         animation: fadeIn 0.8s ease-in-out;
+        margin-left: -250px;
+        padding-left: 250px;
     }
 
+    /* Hide sidebar on homepage for cleaner look */
+    .page:has(.home-page) .sidebar {
+        display: none;
+    }
+
+    .page:has(.home-page) main {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .page:has(.home-page) .home-page {
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    /* Hero Section */
     .hero-section {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px;
+        border-radius: 15px;
         margin: 20px 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
 
-    .hero-section .text-primary {
+    .hero-title {
         color: white !important;
+        font-weight: 700;
+    }
+
+    .hero-subtitle {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 1.1rem;
     }
 
     .stat-card {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
         backdrop-filter: blur(10px);
-        transition: transform 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
 
     .stat-card:hover {
         transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.2);
     }
 
+    .stat-number {
+        color: white !important;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Section Titles */
+    .section-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Quick Actions */
     .action-card {
         background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
         cursor: pointer;
         transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
     }
 
     .action-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        border-color: var(--bs-primary);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+
+    .action-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 2rem 1.5rem;
+        height: 100%;
+    }
+
+    .action-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 2rem;
+    }
+
+    .action-icon.success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    }
+
+    .action-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .action-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* Recent Activity */
+    .recent-activity {
+        height: 100%;
+    }
+
+    .activity-container {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        padding: 1.5rem;
+        height: calc(100% - 60px);
+    }
+
+    .activity-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-indicator {
+        width: 8px;
+        height: 8px;
+        background: #28a745;
+        border-radius: 50%;
+        margin-right: 12px;
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        color: #495057;
+        display: block;
+        line-height: 1.4;
+        margin-bottom: 2px;
+    }
+
+    .activity-time {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .no-activity {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem 0;
+    }
+
+    .no-activity i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* Loading */
+    .loading-container {
+        text-center;
+        padding: 3rem 0;
+    }
+
+    .loading-text {
+        margin-top: 1rem;
+        color: #6c757d;
+    }
+
+    /* No Events */
+    .no-events {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .no-events i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+
+    /* Search Section */
+    .search-section {
+        margin: 3rem 0;
+    }
+
+    .search-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 2.5rem;
+        text-align: center;
+    }
+
+    .search-title {
+        color: #2c3e50;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .search-input-wrapper {
+        display: flex;
+        background: white;
+        border-radius: 50px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .search-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        color: #6c757d;
+        background: white;
+    }
+
+    .search-input {
+        flex: 1;
+        border: none;
+        padding: 15px 20px;
+        font-size: 1rem;
+        outline: none;
+    }
+
+    .search-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .search-button:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+
+    .search-suggestions {
+        text-align: left;
+    }
+
+    .suggestions-label {
+        color: #6c757d;
+        margin-right: 10px;
+    }
+
+    .suggestions-buttons {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .suggestion-btn {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .suggestion-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 3rem 0;
     }
 
     .feature-card {
         background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
         transition: all 0.3s ease;
+        height: 100%;
     }
 
     .feature-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
-    .activity-item {
-        background: rgba(108, 117, 125, 0.1);
-        border-left: 3px solid var(--bs-primary);
-        transition: all 0.2s ease;
-    }
-
-    .activity-item:hover {
-        background: rgba(108, 117, 125, 0.2);
-    }
-
-    .search-suggestions button {
-        margin: 2px;
-    }
-
-    .no-events {
-        min-height: 300px;
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.8rem;
+        color: white;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+    .feature-icon.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
     }
 
-    @media (max-width: 768px) {
+    .feature-icon.success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .feature-icon.info {
+        background: linear-gradient(135deg, #17a2b8 0%, #6610f2 100%);
+    }
+
+    .feature-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .feature-description {
+        color: #6c757d;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Animations */
+    @@keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(30px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
         .hero-section {
-            padding: 3rem 1rem !important;
+            padding: 2rem 1rem !important;
+            margin: 10px;
         }
         
         .display-4 {
             font-size: 2rem !important;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .action-content {
+            padding: 1.5rem 1rem;
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .search-card {
+            padding: 1.5rem;
+        }
+
+        .search-input-wrapper {
+            flex-direction: column;
+            border-radius: 12px;
+        }
+
+        .search-input {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .search-button {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .feature-card {
+            padding: 1.5rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .hero-stats {
+            margin: 0 -10px;
+        }
+        
+        .suggestions-buttons {
+            justify-content: center;
         }
     }
 </style>

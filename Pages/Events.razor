@@ -140,13 +140,12 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="d-flex gap-2 justify-content-md-end">
-                                    <select @bind="FilterOption" @onchange="ApplyFilter" class="form-select" style="width: auto;">
-                                        <option value="all">All Events</option>
+                                    <select @bind="FilterOption" class="form-select" style="width: auto;">
                                         <option value="upcoming">Upcoming Only</option>
                                         <option value="free">Free Events</option>
                                         <option value="paid">Paid Events</option>
                                     </select>
-                                    <select @bind="SortOption" @onchange="ApplySorting" class="form-select" style="width: auto;">
+                                    <select @bind="SortOption" class="form-select" style="width: auto;">
                                         <option value="date">Sort by Date</option>
                                         <option value="title">Sort by Title</option>
                                         <option value="price">Sort by Price</option>
@@ -575,17 +574,17 @@
         text-decoration: underline;
     }
 
-    @keyframes fadeIn {
+    @@keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes slideInLeft {
+    @@keyframes slideInLeft {
         from { opacity: 0; transform: translateX(-20px); }
         to { opacity: 1; transform: translateX(0); }
     }
 
-    @media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .view-controls {
             margin-top: 1rem;
         }
